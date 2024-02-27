@@ -7,6 +7,7 @@ import (
 )
 
 func main() {
+	fmt.Println(ReadRESP([]byte("*3\r\n$4\r\nHola\r\n$3\r\nBob\r\n$7\r\nEsponja\r\n")))
 	l, err := net.Listen("tcp", "0.0.0.0:6379")
 	if err != nil {
 		fmt.Println("Failed to bind to port 6379")
@@ -26,13 +27,11 @@ func main() {
 
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
-
 	rBuf := make([]byte, 1024)
-	wBuf := []byte("+PONG\r\n")
 	_, err := conn.Read(rBuf)
 	for err == nil {
-		conn.Write(wBuf)
+		wBuf := ReadRESP(rBuf)
+		conn.Write(EncodeAsBulk(wBuf))
 		_, err = conn.Read(rBuf)
 	}
-
 }
