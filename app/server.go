@@ -30,7 +30,7 @@ func handleConnection(conn net.Conn) {
 	_, err := conn.Read(rBuf)
 	for err == nil {
 		wBuf := ProcessComand(ReadRESP(rBuf))
-		conn.Write(EncodeAsBulk(wBuf))
+		conn.Write([]byte(wBuf))
 		_, err = conn.Read(rBuf)
 	}
 }

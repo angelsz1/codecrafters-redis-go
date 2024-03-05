@@ -46,8 +46,24 @@ func TestReadArray(t *testing.T) {
 }
 
 func TestBulkEncoding(t *testing.T) {
-	expected := []byte("$3\r\nhey\r\n")
+	expected := "$3\r\nhey\r\n"
 	out := EncodeAsBulk([]string{"hey"})
+	if !reflect.DeepEqual(expected, out) {
+		t.Errorf("Not equal: \nExpected -> %s\nOut -> %s", expected, out)
+	}
+}
+
+func TestBulkEncoding2(t *testing.T) {
+	expected := "$-1\r\n"
+	out := EncodeAsBulk([]string{"null"})
+	if !reflect.DeepEqual(expected, out) {
+		t.Errorf("Not equal: \nExpected -> %s\nOut -> %s", expected, out)
+	}
+}
+
+func TestEncodeSimpleString(t *testing.T) {
+	expected := "+OK\r\n"
+	out := EncodeAsSimpleString("OK")
 	if !reflect.DeepEqual(expected, out) {
 		t.Errorf("Not equal: \nExpected -> %s\nOut -> %s", expected, out)
 	}

@@ -82,12 +82,19 @@ func readArray(r []byte) []string {
 }
 
 //TODO : add support for other types of responses
-func EncodeAsBulk(str []string) []byte {
+func EncodeAsBulk(str []string) string {
 	if len(str) != 1 {
-		return nil
+		return ""
 	}
 	actStr := str[0]
 	strLen := len(actStr)
+	if actStr == "null" {
+		return "$-1\r\n"
+	}
 	encodedStr := fmt.Sprintf("$%d\r\n%s\r\n", strLen, actStr)
-	return []byte(encodedStr)
+	return encodedStr
+}
+
+func EncodeAsSimpleString(str string) string {
+	return fmt.Sprintf("+%s\r\n", str)
 }
