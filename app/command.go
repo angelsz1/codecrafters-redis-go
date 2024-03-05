@@ -4,14 +4,24 @@ import (
 	"strings"
 )
 
-var responses map[string]string = map[string]string {
-	"ping" : "PONG",
+var registry map[string]func([]string) []string = map[string]func([]string) []string {
+	"ping": ping,
+	"echo": echo,
 }
+
 func ProcessComand(cmd []string) []string {
 	command := strings.ToLower(cmd[0])
-	_, ok := responses[command]
+	_, ok := registry[command]
 	if ok {
-		return []string{responses[command]}
+		return registry[command](cmd)
 	}
 	return []string{""}
+}
+
+func ping(cmd []string) []string {
+	return []string{"PONG"}
+}
+
+func echo(cmd []string) []string {
+	return []string{cmd[1]}
 }

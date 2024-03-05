@@ -81,6 +81,7 @@ func readArray(r []byte) []string {
 	return results
 }
 
+//TODO : add support for other types of responses
 func EncodeAsBulk(str []string) []byte {
 	if len(str) != 1 {
 		return nil
