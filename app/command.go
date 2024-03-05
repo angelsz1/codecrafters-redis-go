@@ -1,12 +1,17 @@
 package main
 
+import (
+	"strings"
+)
+
 var responses map[string]string = map[string]string {
-	"ping" : "pong",
+	"ping" : "PONG",
 }
 func ProcessComand(cmd []string) []string {
-	_, ok := responses[cmd[0]]
+	command := strings.ToLower(cmd[0])
+	_, ok := responses[command]
 	if ok {
-		return []string{responses[cmd[0]]}
+		return []string{responses[command]}
 	}
 	return []string{""}
 }

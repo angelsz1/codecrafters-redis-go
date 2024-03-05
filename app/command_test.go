@@ -6,8 +6,8 @@ import (
 )
 
 func TestPing(t *testing.T) {
-	expected := EncodeAsBulk([]string{"pong"})
-	out := EncodeAsBulk(ProcessComand([]string{"ping"}))
+	expected := EncodeAsBulk([]string{"PONG"})
+	out := EncodeAsBulk(ProcessComand([]string{"pInG"}))
 	if !reflect.DeepEqual(expected, out) {
 		t.Errorf("Not equal: \nExpected -> %s\nOut -> %s", expected, out)
 	}
