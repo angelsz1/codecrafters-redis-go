@@ -1,13 +1,17 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net"
 	"os"
 )
 
 func main() {
-	l, err := net.Listen("tcp", "0.0.0.0:6379")
+	portFlag := flag.Int("port", 6379, "redis connection port")
+	flag.Parse()
+	tcpDirection := fmt.Sprintf("0.0.0.0:%d", *portFlag)
+	l, err := net.Listen("tcp", tcpDirection)
 	if err != nil {
 		fmt.Println("Failed to bind to port 6379")
 		os.Exit(1)
@@ -15,10 +19,6 @@ func main() {
 	defer l.Close()
 	conn, err := l.Accept()
 	for err == nil {
-		if err != nil {
-			fmt.Println("Error accepting connection: ", err.Error())
-			continue
-		}
 		go handleConnection(conn)
 		conn, err = l.Accept()
 	}
