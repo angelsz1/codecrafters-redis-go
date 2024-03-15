@@ -1,16 +1,21 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"net"
 	"os"
 )
 
+var state map[string]string = map[string]string{
+	"port":        "6379",
+	"role":        "master",
+	"master_host": "localhost",
+	"master_port": "6379",
+}
+
 func main() {
-	portFlag := flag.Int("port", 6379, "redis connection port")
-	flag.Parse()
-	tcpDirection := fmt.Sprintf("0.0.0.0:%d", *portFlag)
+	setup()
+	tcpDirection := fmt.Sprintf("0.0.0.0:%s", state["port"])
 	l, err := net.Listen("tcp", tcpDirection)
 	if err != nil {
 		fmt.Println("Failed to bind to port 6379")
@@ -21,6 +26,24 @@ func main() {
 	for err == nil {
 		go handleConnection(conn)
 		conn, err = l.Accept()
+	}
+}
+
+func setup() {
+	setUpFlags()
+}
+
+func setUpFlags() {
+	args := os.Args[1:]
+	for idx, value := range args {
+		switch value {
+		case "--port":
+			state["port"] = args[idx+1]
+		case "--replicaof":
+			state["role"] = "slave"
+			state["master_host"] = args[idx+1]
+			state["master_port"] = args[idx+2]
+		}
 	}
 }
 

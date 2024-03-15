@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -74,7 +75,7 @@ func get(cmd []string) string {
 
 func info(cmd []string) string {
 	if strings.Compare("replication", cmd[1]) == 0 {
-		return EncodeAsBulk([]string{"role:master"})
+		return EncodeAsBulk([]string{fmt.Sprintf("role:%s", state["role"])})
 	}
 	return EncodeAsBulk([]string{"null"})
 }
