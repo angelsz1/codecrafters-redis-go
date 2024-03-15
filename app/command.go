@@ -75,7 +75,7 @@ func get(cmd []string) string {
 
 func info(cmd []string) string {
 	if strings.Compare("replication", cmd[1]) == 0 {
-		return EncodeAsBulk([]string{fmt.Sprintf("role:%s", state["role"])})
+		return EncodeAsBulk([]string{fmt.Sprintf("role:%s\nmaster_replid:%s\nmaster_repl_offset:%s", state["role"], state["replication_id"], state["replication_offset"])})
 	}
 	return EncodeAsBulk([]string{"null"})
 }

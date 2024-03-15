@@ -7,10 +7,12 @@ import (
 )
 
 var state map[string]string = map[string]string{
-	"port":        "6379",
-	"role":        "master",
-	"master_host": "localhost",
-	"master_port": "6379",
+	"port":               "6379",
+	"role":               "master",
+	"master_host":        "localhost",
+	"master_port":        "6379",
+	"replication_id":     "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb",
+	"replication_offset": "0",
 }
 
 func main() {
@@ -31,6 +33,9 @@ func main() {
 
 func setup() {
 	setUpFlags()
+	if state["role"] == "master" {
+		//state["replication_id"] = RandomString()
+	}
 }
 
 func setUpFlags() {
