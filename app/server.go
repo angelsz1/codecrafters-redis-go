@@ -65,11 +65,11 @@ func connectToHost(host string, port string) net.Listener {
 		fmt.Println("Failed to bind to port " + port)
 		os.Exit(1)
 	}
-	defer l.Close()
 	return l
 }
 
 func connectionHandler(l net.Listener) {
+	defer l.Close()
 	conn, err := l.Accept()
 	for err == nil {
 		go handleConnection(conn)
