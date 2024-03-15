@@ -17,24 +17,31 @@ var state map[string]string = map[string]string{
 
 func main() {
 	setup()
-	tcpDirection := fmt.Sprintf("0.0.0.0:%s", state["port"])
-	l, err := net.Listen("tcp", tcpDirection)
-	if err != nil {
-		fmt.Println("Failed to bind to port 6379")
-		os.Exit(1)
-	}
-	defer l.Close()
-	conn, err := l.Accept()
-	for err == nil {
-		go handleConnection(conn)
-		conn, err = l.Accept()
-	}
 }
 
 func setup() {
 	setUpFlags()
 	if state["role"] == "master" {
+		l := connectToHost("0.0.0.0", state["port"])
+		connectionHandler(l)
 		//state["replication_id"] = RandomString()
+	} else {
+		//repl handshake
+		sendHandshake()
+	}
+}
+
+func sendHandshake() {
+	l := connectToHost(state["master_host"], state["master_port"])
+	pingMaster(l)
+	//two more steps
+}
+
+func pingMaster(l net.Listener) {
+	conn, err := l.Accept()
+	if err == nil {
+		wBuf := EncodeAsBulkArray([]string{"ping"})
+		conn.Write([]byte(wBuf))
 	}
 }
 
@@ -49,6 +56,24 @@ func setUpFlags() {
 			state["master_host"] = args[idx+1]
 			state["master_port"] = args[idx+2]
 		}
+	}
+}
+
+func connectToHost(host string, port string) net.Listener {
+	l, err := net.Listen("tcp", host+":"+port)
+	if err != nil {
+		fmt.Println("Failed to bind to port " + port)
+		os.Exit(1)
+	}
+	defer l.Close()
+	return l
+}
+
+func connectionHandler(l net.Listener) {
+	conn, err := l.Accept()
+	for err == nil {
+		go handleConnection(conn)
+		conn, err = l.Accept()
 	}
 }
 

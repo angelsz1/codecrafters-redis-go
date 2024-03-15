@@ -51,3 +51,9 @@ func TestEncodeSimpleString(t *testing.T) {
 	out := EncodeAsSimpleString("OK")
 	AssertEqual(expected, out, t)
 }
+
+func TestEncodeArray(t *testing.T) {
+	expected := "*2\r\n$5\r\nhello\r\n$5\r\nworld\r\n"
+	out := EncodeAsBulk([]string{"hello", "world"})
+	AssertEqual(expected, out, t)
+}

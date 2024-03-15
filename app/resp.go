@@ -1,9 +1,9 @@
 package main
 
 import (
-	"strconv"
 	"fmt"
 	"regexp"
+	"strconv"
 )
 
 const (
@@ -24,21 +24,21 @@ func ReadRESP(r []byte) []string {
 		return readBulk(r)
 	case Array:
 		return readArray(r)
-	// case Error:
-	// 	return readError(r)
+		// case Error:
+		// 	return readError(r)
 	}
 	return []string{"FATAL ERROR"}
 }
 
 func readString(r []byte) []string {
 	length := len(r)
-	str := r[1:length-2]
+	str := r[1 : length-2]
 	return []string{string(str)}
 }
 
 func readInteger(r []byte) []string {
 	length := len(r)
-	num := r[1:length-2]
+	num := r[1 : length-2]
 	conv, err := strconv.Atoi(string(num))
 	if err != nil {
 		panic("This shouldn't happen")
@@ -58,7 +58,7 @@ func readBulk(r []byte) []string {
 	if conv == 0 {
 		return []string{""}
 	}
-	return []string{string(r[index + 2:len(r)-2])}
+	return []string{string(r[index+2 : len(r)-2])}
 }
 
 func readArray(r []byte) []string {
@@ -72,19 +72,18 @@ func readArray(r []byte) []string {
 			prev_match = match[0]
 			continue
 		}
-		if i % 2 != 0 {
+		if i%2 != 0 {
 			continue
-		} 
-		results = append(results, ReadRESP(r[prev_match+1:match[0]+1])[0])
+		}
+		results = append(results, ReadRESP(r[prev_match+1 : match[0]+1])[0])
 		prev_match = match[0]
 	}
 	return results
 }
 
-//TODO : add support for other types of responses
 func EncodeAsBulk(str []string) string {
 	if len(str) != 1 {
-		return ""
+		return EncodeAsBulkArray(str)
 	}
 	actStr := str[0]
 	strLen := len(actStr)
@@ -92,6 +91,16 @@ func EncodeAsBulk(str []string) string {
 		return "$-1\r\n"
 	}
 	encodedStr := fmt.Sprintf("$%d\r\n%s\r\n", strLen, actStr)
+	return encodedStr
+}
+
+func EncodeAsBulkArray(str []string) string {
+	//first iteration, all bulk strings
+	lenght := len(str)
+	encodedStr := fmt.Sprintf("*%d\r\n", lenght)
+	for _, value := range str {
+		encodedStr += EncodeAsBulk([]string{value})
+	}
 	return encodedStr
 }
 
