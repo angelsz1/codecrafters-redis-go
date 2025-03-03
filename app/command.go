@@ -13,11 +13,12 @@ type Expiry struct {
 }
 
 var registry map[string]func([]string) string = map[string]func([]string) string{
-	"ping": ping,
-	"echo": echo,
-	"set":  set,
-	"get":  get,
-	"info": info,
+	"ping":     ping,
+	"echo":     echo,
+	"set":      set,
+	"get":      get,
+	"info":     info,
+	"replconf": replconf,
 }
 
 var values map[string]string = make(map[string]string)
@@ -83,4 +84,8 @@ func info(cmd []string) string {
 func deleteKeyValue(key string) {
 	delete(values, key)
 	delete(expiryValues, key)
+}
+
+func replconf(cmd []string) string {
+	return EncodeAsSimpleString("OK")
 }

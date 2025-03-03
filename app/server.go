@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"strings"
 )
 
 const (
@@ -28,22 +27,10 @@ func setup() {
 	setUpFlags()
 	if state["role"] == "slave" {
 		//handshake
-		sendHandshake()
+		SendHandshake()
 	}
 	l := connectToHost(HOST, state["port"])
 	connectionHandler(l)
-}
-
-func sendHandshake() {
-	l := connectToMaster()
-	pingMaster(l)
-	//two more steps
-}
-
-func pingMaster(l net.Conn) {
-	defer l.Close()
-	wBuf := EncodeAsBulkArray([]string{"ping"})
-	l.Write([]byte(wBuf))
 }
 
 func setUpFlags() {
@@ -53,16 +40,9 @@ func setUpFlags() {
 		case "--port":
 			state["port"] = args[idx+1]
 		case "--replicaof":
-			setReplicaState(args[idx+1])
+			SetReplicaState(args[idx+1], &state)
 		}
 	}
-}
-
-func setReplicaState(replState string) {
-	state["role"] = "slave"
-	splState := strings.Split(replState, " ")
-	state["master_host"] = splState[0]
-	state["master_port"] = splState[1]
 }
 
 func connectToHost(host string, port string) net.Listener {
