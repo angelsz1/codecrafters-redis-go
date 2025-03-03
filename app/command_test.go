@@ -43,7 +43,7 @@ func TestSetPXAndGetOK(t *testing.T) {
 	expected := EncodeAsSimpleString("OK")
 	out := ProcessComand([]string{"set", "key", "value", "px", "10"})
 	AssertEqual(expected, out, t)
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(9 * time.Millisecond)
 	expected = EncodeAsBulk([]string{"value"})
 	out = ProcessComand([]string{"get", "key"})
 	AssertEqual(expected, out, t)

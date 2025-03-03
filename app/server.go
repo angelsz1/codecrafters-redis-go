@@ -4,6 +4,11 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
+)
+
+const (
+	HOST = "0.0.0.0"
 )
 
 var state map[string]string = map[string]string{
@@ -21,28 +26,24 @@ func main() {
 
 func setup() {
 	setUpFlags()
-	if state["role"] == "master" {
-		l := connectToHost("0.0.0.0", state["port"])
-		connectionHandler(l)
-		//state["replication_id"] = RandomString()
-	} else {
-		//repl handshake
+	if state["role"] == "slave" {
+		//handshake
 		sendHandshake()
 	}
+	l := connectToHost(HOST, state["port"])
+	connectionHandler(l)
 }
 
 func sendHandshake() {
-	l := connectToHost(state["master_host"], state["master_port"])
+	l := connectToMaster()
 	pingMaster(l)
 	//two more steps
 }
 
-func pingMaster(l net.Listener) {
-	conn, err := l.Accept()
-	if err == nil {
-		wBuf := EncodeAsBulkArray([]string{"ping"})
-		conn.Write([]byte(wBuf))
-	}
+func pingMaster(l net.Conn) {
+	defer l.Close()
+	wBuf := EncodeAsBulkArray([]string{"ping"})
+	l.Write([]byte(wBuf))
 }
 
 func setUpFlags() {
@@ -52,20 +53,36 @@ func setUpFlags() {
 		case "--port":
 			state["port"] = args[idx+1]
 		case "--replicaof":
-			state["role"] = "slave"
-			state["master_host"] = args[idx+1]
-			state["master_port"] = args[idx+2]
+			setReplicaState(args[idx+1])
 		}
 	}
 }
 
+func setReplicaState(replState string) {
+	state["role"] = "slave"
+	splState := strings.Split(replState, " ")
+	state["master_host"] = splState[0]
+	state["master_port"] = splState[1]
+}
+
 func connectToHost(host string, port string) net.Listener {
-	l, err := net.Listen("tcp", host+":"+port)
+	l, err := net.Listen("tcp", net.JoinHostPort(host, port))
 	if err != nil {
 		fmt.Println("Failed to bind to port " + port)
 		os.Exit(1)
 	}
 	return l
+}
+
+func connectToMaster() net.Conn {
+	address := net.JoinHostPort(state["master_host"], state["master_port"])
+	conn, err := net.Dial("tcp", address)
+	if err != nil {
+		fmt.Println("Failed to connect to master")
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+	return conn
 }
 
 func connectionHandler(l net.Listener) {
