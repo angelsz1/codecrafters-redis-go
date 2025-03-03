@@ -54,17 +54,6 @@ func connectToHost(host string, port string) net.Listener {
 	return l
 }
 
-func connectToMaster() net.Conn {
-	address := net.JoinHostPort(state["master_host"], state["master_port"])
-	conn, err := net.Dial("tcp", address)
-	if err != nil {
-		fmt.Println("Failed to connect to master")
-		fmt.Println(err.Error())
-		os.Exit(1)
-	}
-	return conn
-}
-
 func connectionHandler(l net.Listener) {
 	defer l.Close()
 	conn, err := l.Accept()
