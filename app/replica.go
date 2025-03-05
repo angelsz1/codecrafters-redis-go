@@ -15,7 +15,6 @@ func SendHandshake() {
 	replconfMaster(l)
 	l.Read(buffer)
 	psyncMaster(l)
-	//one more steps
 }
 
 func pingMaster(l net.Conn) {
@@ -31,7 +30,6 @@ func replconfMaster(l net.Conn) {
 }
 
 func psyncMaster(l net.Conn) {
-	//for now, it looks hardcoded
 	buffer := make([]byte, 1024)
 	l.Read(buffer)
 	wBuf := EncodeAsBulkArray([]string{"PSYNC", "?", "-1"})
@@ -54,4 +52,9 @@ func connectToMaster() net.Conn {
 		os.Exit(1)
 	}
 	return conn
+}
+
+func IsHandshakeCommand(command []string) bool {
+	lcmd := strings.ToLower(command[0])
+	return lcmd == "ping" || lcmd == "replconf" || lcmd == "psync"
 }
