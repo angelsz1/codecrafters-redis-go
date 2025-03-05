@@ -19,6 +19,7 @@ var registry map[string]func([]string) string = map[string]func([]string) string
 	"get":      get,
 	"info":     info,
 	"replconf": replconf,
+	"psync":    psync,
 }
 
 var values map[string]string = make(map[string]string)
@@ -88,4 +89,11 @@ func deleteKeyValue(key string) {
 
 func replconf(cmd []string) string {
 	return EncodeAsSimpleString("OK")
+}
+
+func psync(cmd []string) string {
+	fullRsync := "FULLRESYNC"
+	replId := state["replication_id"]
+	replOff := state["replication_offset"]
+	return EncodeAsSimpleString(fmt.Sprintf("%s %s %s", fullRsync, replId, replOff))
 }
