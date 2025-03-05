@@ -13,7 +13,9 @@ func SendHandshake() {
 	buffer := make([]byte, 1024)
 	l.Read(buffer)
 	replconfMaster(l)
-	//two more steps
+	l.Read(buffer)
+	psyncMaster(l)
+	//one more steps
 }
 
 func pingMaster(l net.Conn) {
@@ -22,10 +24,18 @@ func pingMaster(l net.Conn) {
 }
 
 func replconfMaster(l net.Conn) {
-	wBuf1 := EncodeAsBulkArray([]string{"REPLCONF", "listening-port", state["port"]})
-	l.Write([]byte(wBuf1))
-	wBuf2 := EncodeAsBulkArray([]string{"REPLCONF", "capa", "psync2"})
-	l.Write([]byte(wBuf2))
+	wBuf := EncodeAsBulkArray([]string{"REPLCONF", "listening-port", state["port"]})
+	l.Write([]byte(wBuf))
+	wBuf = EncodeAsBulkArray([]string{"REPLCONF", "capa", "psync2"})
+	l.Write([]byte(wBuf))
+}
+
+func psyncMaster(l net.Conn) {
+	//for now, it looks hardcoded
+	buffer := make([]byte, 1024)
+	l.Read(buffer)
+	wBuf := EncodeAsBulkArray([]string{"PSYNC", "?", "-1"})
+	l.Write([]byte(wBuf))
 }
 
 func SetReplicaState(replState string, st *map[string]string) {
