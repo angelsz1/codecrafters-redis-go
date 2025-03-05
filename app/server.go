@@ -26,7 +26,6 @@ func main() {
 func setup() {
 	setUpFlags()
 	if state["role"] == "slave" {
-		//handshake
 		SendHandshake()
 	}
 	l := connectToHost(HOST, state["port"])

@@ -95,5 +95,6 @@ func psync(cmd []string) string {
 	fullRsync := "FULLRESYNC"
 	replId := state["replication_id"]
 	replOff := state["replication_offset"]
-	return EncodeAsSimpleString(fmt.Sprintf("%s %s %s", fullRsync, replId, replOff))
+	return EncodeAsSimpleString(fmt.Sprintf("%s %s %s", fullRsync, replId, replOff)) +
+		RDBState()
 }
