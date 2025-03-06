@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -106,4 +107,14 @@ func EncodeAsBulkArray(str []string) string {
 
 func EncodeAsSimpleString(str string) string {
 	return fmt.Sprintf("+%s\r\n", str)
+}
+
+func CheckForMultipleCommand(buffer []byte) [][]string {
+	var commands [][]string
+	for _, cmd := range strings.Split(string(buffer), "*") {
+		cmd = "*" + cmd
+		commands = append(commands, ReadRESP([]byte(cmd)))
+	}
+	fmt.Println(commands)
+	return commands
 }

@@ -15,7 +15,24 @@ func SendHandshake() {
 	replconfMaster(l)
 	l.Read(buffer)
 	psyncMaster(l)
-	go handleConnection(l)
+	go waitForMaster(l)
+}
+
+func waitForMaster(conn net.Conn) {
+	defer conn.Close()
+	rBuf := make([]byte, 1024)
+	_, err := conn.Read(rBuf)
+	for err == nil {
+		commands := CheckForMultipleCommand(rBuf)
+		for _, cmd := range commands {
+			if len(cmd) == 0 {
+				continue
+			}
+			wBuf := ProcessComand(cmd)
+			conn.Write([]byte(wBuf))
+		}
+		_, err = conn.Read(rBuf)
+	}
 }
 
 func pingMaster(l net.Conn) {
