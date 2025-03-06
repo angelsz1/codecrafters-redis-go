@@ -52,7 +52,6 @@ func psyncMaster(l net.Conn) {
 	l.Read(buffer)
 	wBuf := EncodeAsBulkArray([]string{"PSYNC", "?", "-1"})
 	l.Write([]byte(wBuf))
-	l.Read(buffer)
 }
 
 func SetReplicaState(replState string, st *map[string]string) {

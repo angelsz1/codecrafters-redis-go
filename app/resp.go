@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
-	"strings"
 )
 
 const (
@@ -111,10 +110,10 @@ func EncodeAsSimpleString(str string) string {
 
 func CheckForMultipleCommand(buffer []byte) [][]string {
 	var commands [][]string
-	for _, cmd := range strings.Split(string(buffer), "*") {
+	re := regexp.MustCompile(`\*[0-9]+`)
+	for _, cmd := range re.Split(string(buffer), -1) {
 		cmd = "*" + cmd
 		commands = append(commands, ReadRESP([]byte(cmd)))
 	}
-	fmt.Println(commands)
 	return commands
 }

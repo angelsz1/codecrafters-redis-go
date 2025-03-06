@@ -91,7 +91,11 @@ func deleteKeyValue(key string) {
 }
 
 func replconf(cmd []string) string {
-	return EncodeAsSimpleString("OK")
+	if state["role"] == "master" {
+		return EncodeAsSimpleString("OK")
+	}
+	fmt.Println("en replconf as replica")
+	return EncodeAsBulkArray([]string{"REPLCONF", "ACK", "0"})
 }
 
 func psync(cmd []string) string {
