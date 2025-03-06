@@ -47,7 +47,10 @@ func set(cmd []string) string {
 		pxSet(cmd)
 	}
 	values[cmd[1]] = cmd[2]
-	return EncodeAsSimpleString("OK")
+	if state["role"] == "master" {
+		return EncodeAsSimpleString("OK")
+	}
+	return ""
 }
 
 func pxSet(cmd []string) {
