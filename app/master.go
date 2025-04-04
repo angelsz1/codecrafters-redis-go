@@ -7,6 +7,12 @@ import (
 	"strings"
 )
 
+var WriteCommands = []string{
+	"set",
+	"del",
+	"replconf",
+}
+
 const RDBMasterStateFilePath = "empty.rdb"
 
 var replicas []net.Conn
@@ -35,6 +41,19 @@ func Propagate(command []byte) {
 		strCmd := strings.Replace(string(command), "\x00", "", -1)
 		conn.Write([]byte(strCmd))
 	}
+}
+
+func IsWriteCommand(command []string) bool {
+	if len(command) <= 0 {
+		return false
+	}
+	cmdName := strings.ToLower(command[0])
+	for _, cmd := range WriteCommands {
+		if strings.Compare(cmd, cmdName) == 0 {
+			return true
+		}
+	}
+	return false
 }
 
 func ReplicaExists(conn net.Conn) bool {

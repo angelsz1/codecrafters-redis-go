@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -112,8 +113,18 @@ func CheckForMultipleCommand(buffer []byte) [][]string {
 	var commands [][]string
 	re := regexp.MustCompile(`\*[0-9]+`)
 	for _, cmd := range re.Split(string(buffer), -1) {
+		if strings.Contains(cmd, "aof-base") || strings.Contains(cmd, "redis-ver") || len(cmd) == 0 {
+			continue
+		}
 		cmd = "*" + cmd
 		commands = append(commands, ReadRESP([]byte(cmd)))
 	}
 	return commands
+}
+
+func RespStringToRespArray(str string) string {
+	if len(str) > 0 && str[0] != '*' {
+		return fmt.Sprintf("*1\r\n%s", str)
+	}
+	return str
 }

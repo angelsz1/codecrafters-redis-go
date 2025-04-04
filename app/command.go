@@ -94,8 +94,8 @@ func replconf(cmd []string) string {
 	if state["role"] == "master" {
 		return EncodeAsSimpleString("OK")
 	}
-	fmt.Println("en replconf as replica")
-	return EncodeAsBulkArray([]string{"REPLCONF", "ACK", "0"})
+	res := EncodeAsBulkArray([]string{"REPLCONF", "ACK", fmt.Sprintf("%d", byteCount)})
+	return res
 }
 
 func psync(cmd []string) string {

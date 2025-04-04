@@ -5,7 +5,10 @@ import (
 	"net"
 	"os"
 	"strings"
+	"time"
 )
+
+var byteCount int = 0
 
 func SendHandshake() {
 	l := connectToMaster()
@@ -15,24 +18,34 @@ func SendHandshake() {
 	replconfMaster(l)
 	l.Read(buffer)
 	psyncMaster(l)
-	go waitForMaster(l)
+	waitForMaster(l)
 }
 
 func waitForMaster(conn net.Conn) {
-	defer conn.Close()
 	rBuf := make([]byte, 1024)
 	_, err := conn.Read(rBuf)
 	for err == nil {
 		commands := CheckForMultipleCommand(rBuf)
+		fmt.Println(string(rBuf))
+		fmt.Println(commands)
 		for _, cmd := range commands {
 			if len(cmd) == 0 {
 				continue
 			}
-			wBuf := ProcessComand(cmd)
-			conn.Write([]byte(wBuf))
+			if IsWriteCommand(cmd) {
+				wBuf := RespStringToRespArray(ProcessComand(cmd))
+				conn.Write([]byte(wBuf))
+			}
+			time.Sleep(time.Millisecond * 2)
+			countBytes(cmd)
 		}
 		_, err = conn.Read(rBuf)
 	}
+	conn.Close()
+}
+
+func countBytes(cmd []string) {
+	byteCount += len(EncodeAsBulkArray(cmd))
 }
 
 func pingMaster(l net.Conn) {

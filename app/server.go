@@ -67,7 +67,7 @@ func handleConnection(conn net.Conn) {
 	rBuf := make([]byte, 1024)
 	_, err := conn.Read(rBuf)
 	for err == nil {
-		if state["role"] == "master" && !IsHandshakeCommand(ReadRESP(rBuf)) {
+		if state["role"] == "master" && !IsHandshakeCommand(ReadRESP(rBuf)) && IsWriteCommand(ReadRESP(rBuf)) {
 			Propagate(rBuf)
 		} else if state["role"] == "master" && !ReplicaExists(conn) {
 			AddReplica(conn)
