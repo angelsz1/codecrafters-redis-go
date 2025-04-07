@@ -20,6 +20,7 @@ var registry map[string]func([]string) string = map[string]func([]string) string
 	"info":     info,
 	"replconf": replconf,
 	"psync":    psync,
+	"wait":     wait,
 }
 
 var values map[string]string = make(map[string]string)
@@ -106,4 +107,8 @@ func psync(cmd []string) string {
 	replOff := state["replication_offset"]
 	return EncodeAsSimpleString(fmt.Sprintf("%s %s %s", fullRsync, replId, replOff)) +
 		RDBState()
+}
+
+func wait(cmd []string) string {
+	return EncodeAsInt(0)
 }

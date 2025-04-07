@@ -108,6 +108,10 @@ func EncodeAsSimpleString(str string) string {
 	return fmt.Sprintf("+%s\r\n", str)
 }
 
+func EncodeAsInt(num int) string {
+	return fmt.Sprintf(":%d\r\n", num)
+}
+
 func CheckForMultipleCommand(buffer []byte) [][]string {
 	var commands [][]string
 	re := regexp.MustCompile(`\*[0-9]+`)
