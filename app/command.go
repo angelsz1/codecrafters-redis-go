@@ -110,5 +110,5 @@ func psync(cmd []string) string {
 }
 
 func wait(cmd []string) string {
-	return EncodeAsInt(0)
+	return EncodeAsInt(len(replicas) - 1)
 }
