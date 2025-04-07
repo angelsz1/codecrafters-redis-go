@@ -1,70 +1,80 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"os"
 	"strings"
-	"time"
 )
 
 var byteCount int = 0
+var canCountBytes bool = false
 
 func SendHandshake() {
-	l := connectToMaster()
-	pingMaster(l)
-	buffer := make([]byte, 1024)
-	l.Read(buffer)
-	replconfMaster(l)
-	l.Read(buffer)
-	psyncMaster(l)
-	waitForMaster(l)
+	conn := connectToMaster()
+	reader := bufio.NewReader(conn)
+	writer := bufio.NewWriter(conn)
+	pingMaster(writer)
+	readBuf(reader)
+	replconfMaster(writer)
+	readBuf(reader)
+	psyncMaster(reader, writer)
+	go waitForMaster(conn)
 }
 
 func waitForMaster(conn net.Conn) {
-	rBuf := make([]byte, 1024)
-	_, err := conn.Read(rBuf)
-	for err == nil {
-		commands := CheckForMultipleCommand(rBuf)
-		fmt.Println(string(rBuf))
-		fmt.Println(commands)
+	reader := bufio.NewReader(conn)
+	writer := bufio.NewWriter(conn)
+	for {
+		line := make([]byte, 1024)
+		_, err := reader.Read(line)
+		if err != nil {
+			break
+		}
+		commands := CheckForMultipleCommand(line)
 		for _, cmd := range commands {
 			if len(cmd) == 0 {
 				continue
 			}
 			if IsWriteCommand(cmd) {
 				wBuf := RespStringToRespArray(ProcessComand(cmd))
-				conn.Write([]byte(wBuf))
+				writer.Write([]byte(wBuf))
+				writer.Flush()
 			}
-			time.Sleep(time.Millisecond * 2)
 			countBytes(cmd)
 		}
-		_, err = conn.Read(rBuf)
 	}
 	conn.Close()
 }
 
 func countBytes(cmd []string) {
-	byteCount += len(EncodeAsBulkArray(cmd))
+	if canCountBytes {
+		byteCount += len(EncodeAsBulkArray(cmd))
+	}
 }
 
-func pingMaster(l net.Conn) {
+func pingMaster(writer *bufio.Writer) {
 	wBuf := EncodeAsBulkArray([]string{"ping"})
-	l.Write([]byte(wBuf))
+	writer.Write([]byte(wBuf))
+	writer.Flush()
 }
 
-func replconfMaster(l net.Conn) {
-	wBuf := EncodeAsBulkArray([]string{"REPLCONF", "listening-port", state["port"]})
-	l.Write([]byte(wBuf))
-	wBuf = EncodeAsBulkArray([]string{"REPLCONF", "capa", "psync2"})
-	l.Write([]byte(wBuf))
+func replconfMaster(writer *bufio.Writer) {
+	writer.Write([]byte(EncodeAsBulkArray([]string{"REPLCONF", "listening-port", state["port"]})))
+	writer.Write([]byte(EncodeAsBulkArray([]string{"REPLCONF", "capa", "psync2"})))
+	writer.Flush()
 }
 
-func psyncMaster(l net.Conn) {
-	buffer := make([]byte, 1024)
-	l.Read(buffer)
-	wBuf := EncodeAsBulkArray([]string{"PSYNC", "?", "-1"})
-	l.Write([]byte(wBuf))
+func psyncMaster(reader *bufio.Reader, writer *bufio.Writer) {
+	readBuf(reader)
+	writer.Write([]byte(EncodeAsBulkArray([]string{"PSYNC", "?", "-1"})))
+	writer.Flush()
+}
+
+func readBuf(reader *bufio.Reader) {
+	// Reads until newline for simplicity, adjust if protocol differs
+	reader.ReadBytes('\n')
 }
 
 func SetReplicaState(replState string, st *map[string]string) {

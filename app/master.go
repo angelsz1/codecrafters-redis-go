@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"os"
@@ -37,9 +38,11 @@ func AddReplica(conn net.Conn) {
 }
 
 func Propagate(command []byte) {
+	strCmd := strings.ReplaceAll(string(command), "\x00", "")
 	for _, conn := range replicas {
-		strCmd := strings.Replace(string(command), "\x00", "", -1)
-		conn.Write([]byte(strCmd))
+		writer := bufio.NewWriter(conn)
+		writer.WriteString(strCmd)
+		writer.Flush()
 	}
 }
 

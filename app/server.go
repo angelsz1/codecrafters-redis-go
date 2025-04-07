@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"os"
@@ -64,16 +65,22 @@ func connectionHandler(l net.Listener) {
 
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
-	rBuf := make([]byte, 1024)
-	_, err := conn.Read(rBuf)
-	for err == nil {
-		if state["role"] == "master" && !IsHandshakeCommand(ReadRESP(rBuf)) && IsWriteCommand(ReadRESP(rBuf)) {
-			Propagate(rBuf)
+	reader := bufio.NewReader(conn)
+	writer := bufio.NewWriter(conn)
+	for {
+		line := make([]byte, 1024)
+		_, err := reader.Read(line)
+		if err != nil {
+			break
+		}
+		resp := ReadRESP(line)
+		if state["role"] == "master" && !IsHandshakeCommand(resp) && IsWriteCommand(resp) {
+			Propagate(line)
 		} else if state["role"] == "master" && !ReplicaExists(conn) {
 			AddReplica(conn)
 		}
-		wBuf := ProcessComand(ReadRESP(rBuf))
-		conn.Write([]byte(wBuf))
-		_, err = conn.Read(rBuf)
+		wBuf := ProcessComand(resp)
+		writer.Write([]byte(wBuf))
+		writer.Flush()
 	}
 }

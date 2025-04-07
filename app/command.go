@@ -62,6 +62,7 @@ func pxSet(cmd []string) {
 }
 
 func get(cmd []string) string {
+	fmt.Println(cmd)
 	_, ok := values[cmd[1]]
 	if ok {
 		_, ok := expiryValues[cmd[1]]
@@ -95,6 +96,7 @@ func replconf(cmd []string) string {
 		return EncodeAsSimpleString("OK")
 	}
 	res := EncodeAsBulkArray([]string{"REPLCONF", "ACK", fmt.Sprintf("%d", byteCount)})
+	canCountBytes = true
 	return res
 }
 
