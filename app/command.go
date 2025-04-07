@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"net"
 	"strconv"
 	"strings"
 	"time"
@@ -110,5 +112,29 @@ func psync(cmd []string) string {
 }
 
 func wait(cmd []string) string {
-	return EncodeAsInt(len(replicas) - 1)
+	intCmd, _ := strconv.Atoi(cmd[1])
+	intTimeout, _ := strconv.Atoi(cmd[2])
+	expiry := Expiry{int64(intTimeout), time.Now().UnixMilli()}
+	var replicasAvailable int = 0
+	for _, repl := range replicas {
+		go propagateToReplicaAndWaitForResponse([]byte(EncodeAsBulk([]string{"REPLCONF", "ACK", "*"})), repl, &replicasAvailable)
+	}
+	for {
+		if intCmd <= replicasAvailable || time.Now().UnixMilli()-expiry.setTime > expiry.deadline {
+			return EncodeAsInt(replicasAvailable)
+		}
+	}
+}
+
+func propagateToReplicaAndWaitForResponse(cmd []byte, repl net.Conn, avRepl *int) {
+	reader := bufio.NewReader(repl)
+	writer := bufio.NewWriter(repl)
+	writer.Write(cmd)
+	line := make([]byte, 1024)
+	_, err := reader.Read(line)
+	if err != nil {
+		panic("something is very wrong here")
+	}
+	reader.Read(line)
+	*avRepl += 1
 }
