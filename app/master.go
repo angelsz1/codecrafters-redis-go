@@ -73,3 +73,9 @@ func ReplicaExists(conn net.Conn) bool {
 	}
 	return false
 }
+
+func propagateToReplica(cmd []byte, repl replica) {
+	writer := bufio.NewWriter(repl.conn)
+	writer.Write(cmd)
+	writer.Flush()
+}

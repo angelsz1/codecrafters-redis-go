@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"strconv"
 	"strings"
@@ -22,6 +21,7 @@ var registry map[string]func([]string) string = map[string]func([]string) string
 	"replconf": replconf,
 	"psync":    psync,
 	"wait":     wait,
+	"config":   config,
 }
 
 var values map[string]string = make(map[string]string)
@@ -139,8 +139,13 @@ loop:
 	return EncodeAsInt(acks)
 }
 
-func propagateToReplica(cmd []byte, repl replica) {
-	writer := bufio.NewWriter(repl.conn)
-	writer.Write(cmd)
-	writer.Flush()
+func config(cmd []string) string {
+	//need to check cmd[1] (GET or something else)
+	if cmd[2] == "dir" {
+		return EncodeAsBulkArray([]string{"dir", state["dir"]})
+	} else if cmd[2] == "dbfilename" {
+		return EncodeAsBulkArray([]string{"dbfilename", state["dbfilename"]})
+	} else {
+		panic("Getting something forbbiden")
+	}
 }

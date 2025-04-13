@@ -18,6 +18,8 @@ var state map[string]string = map[string]string{
 	"master_port":        "6379",
 	"replication_id":     "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb",
 	"replication_offset": "0",
+	"dir":                "/tmp/redis-data",
+	"dbfilename":         "dump.rdb",
 }
 
 func main() {
@@ -41,6 +43,11 @@ func setUpFlags() {
 			state["port"] = args[idx+1]
 		case "--replicaof":
 			SetReplicaState(args[idx+1], &state)
+
+		case "--dir":
+			state["dir"] = args[idx+1]
+		case "--dbfilename":
+			state["dbfilename"] = args[idx+1]
 		}
 	}
 }
