@@ -99,3 +99,8 @@ func IsHandshakeCommand(command []string) bool {
 	lcmd := strings.ToLower(command[0])
 	return lcmd == "ping" || lcmd == "replconf" || lcmd == "psync"
 }
+
+func IsPsyncCommand(command []string) bool {
+	lcmd := strings.ToLower(command[0])
+	return lcmd == "psync"
+}

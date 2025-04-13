@@ -8,6 +8,11 @@ import (
 	"strings"
 )
 
+type replica struct {
+	conn      net.Conn
+	bytesSent int
+}
+
 var WriteCommands = []string{
 	"set",
 	"del",
@@ -16,7 +21,7 @@ var WriteCommands = []string{
 
 const RDBMasterStateFilePath = "empty.rdb"
 
-var replicas []net.Conn
+var replicas []replica
 
 func RDBState() string {
 	data, err := os.ReadFile(RDBMasterStateFilePath)
@@ -34,15 +39,16 @@ func formatRDB(data string) string {
 }
 
 func AddReplica(conn net.Conn) {
-	replicas = append(replicas, conn)
+	replicas = append(replicas, replica{conn, 0})
 }
 
 func Propagate(command []byte) {
 	strCmd := strings.ReplaceAll(string(command), "\x00", "")
-	for _, conn := range replicas {
-		writer := bufio.NewWriter(conn)
+	for i, replica := range replicas {
+		writer := bufio.NewWriter(replica.conn)
 		writer.WriteString(strCmd)
 		writer.Flush()
+		replicas[i].bytesSent += len(strCmd)
 	}
 }
 
@@ -61,7 +67,7 @@ func IsWriteCommand(command []string) bool {
 
 func ReplicaExists(conn net.Conn) bool {
 	for _, repl := range replicas {
-		if conn == repl {
+		if conn == repl.conn {
 			return true
 		}
 	}

@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"net"
 	"strconv"
 	"strings"
 	"time"
@@ -27,6 +26,7 @@ var registry map[string]func([]string) string = map[string]func([]string) string
 
 var values map[string]string = make(map[string]string)
 var expiryValues map[string]Expiry = make(map[string]Expiry)
+var ackChan = make(chan bool)
 
 func ProcessComand(cmd []string) string {
 	command := strings.ToLower(cmd[0])
@@ -65,7 +65,6 @@ func pxSet(cmd []string) {
 }
 
 func get(cmd []string) string {
-	fmt.Println(cmd)
 	_, ok := values[cmd[1]]
 	if ok {
 		_, ok := expiryValues[cmd[1]]
@@ -96,7 +95,12 @@ func deleteKeyValue(key string) {
 
 func replconf(cmd []string) string {
 	if state["role"] == "master" {
-		return EncodeAsSimpleString("OK")
+		if cmd[1] == "ACK" {
+			ackChan <- true
+			return ""
+		} else {
+			return EncodeAsSimpleString("OK")
+		}
 	}
 	res := EncodeAsBulkArray([]string{"REPLCONF", "ACK", fmt.Sprintf("%d", byteCount)})
 	canCountBytes = true
@@ -112,29 +116,31 @@ func psync(cmd []string) string {
 }
 
 func wait(cmd []string) string {
-	intCmd, _ := strconv.Atoi(cmd[1])
-	intTimeout, _ := strconv.Atoi(cmd[2])
-	expiry := Expiry{int64(intTimeout), time.Now().UnixMilli()}
-	var replicasAvailable int = 0
+	desiredReplicas, _ := strconv.Atoi(cmd[1])
+	timeout, _ := strconv.Atoi(cmd[2])
+	acks := 0
 	for _, repl := range replicas {
-		go propagateToReplicaAndWaitForResponse([]byte(EncodeAsBulk([]string{"REPLCONF", "ACK", "*"})), repl, &replicasAvailable)
+		if repl.bytesSent == 0 {
+			acks++
+			continue
+		}
+		go propagateToReplica([]byte(EncodeAsBulk([]string{"REPLCONF", "GETACK", "*"})), repl)
 	}
-	for {
-		if intCmd <= replicasAvailable || time.Now().UnixMilli()-expiry.setTime > expiry.deadline {
-			return EncodeAsInt(replicasAvailable)
+	timer := time.After(time.Duration(timeout) * time.Millisecond)
+loop:
+	for desiredReplicas > acks {
+		select {
+		case <-ackChan:
+			acks++
+		case <-timer:
+			break loop
 		}
 	}
+	return EncodeAsInt(acks)
 }
 
-func propagateToReplicaAndWaitForResponse(cmd []byte, repl net.Conn, avRepl *int) {
-	reader := bufio.NewReader(repl)
-	writer := bufio.NewWriter(repl)
+func propagateToReplica(cmd []byte, repl replica) {
+	writer := bufio.NewWriter(repl.conn)
 	writer.Write(cmd)
-	line := make([]byte, 1024)
-	_, err := reader.Read(line)
-	if err != nil {
-		panic("something is very wrong here")
-	}
-	reader.Read(line)
-	*avRepl += 1
+	writer.Flush()
 }

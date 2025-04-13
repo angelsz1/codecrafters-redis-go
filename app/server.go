@@ -76,7 +76,7 @@ func handleConnection(conn net.Conn) {
 		resp := ReadRESP(line)
 		if state["role"] == "master" && !IsHandshakeCommand(resp) && IsWriteCommand(resp) {
 			Propagate(line)
-		} else if state["role"] == "master" && !ReplicaExists(conn) {
+		} else if state["role"] == "master" && !ReplicaExists(conn) && IsPsyncCommand(resp) {
 			AddReplica(conn)
 		}
 		wBuf := ProcessComand(resp)
